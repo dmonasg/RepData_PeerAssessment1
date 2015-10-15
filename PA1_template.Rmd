@@ -1,0 +1,82 @@
+---
+title: "RepRes Peer Assignment 1"
+author: "dg"
+date: "Wednesday, October 07, 2015"
+output: html_document
+---
+
+This document describes the analysis of an activity monitoring dataset, illustrates the code used to run the analysis, and displays the output of the analysis.
+
+#Loading and preprocessing the data
+
+```{r, echo=TRUE}
+data <- read.csv("activity.csv")
+data$steps <- as.numeric(data$steps)
+data$interval <- as.factor(data$interval)
+data$date <- as.Date(data$date)
+library(plyr)
+```
+
+#Calculate mean steps per day
+
+```{r, echo=TRUE}
+sumsteps <- ddply(data, .(date), summarize, totalsteps = sum(steps,na.rm=TRUE))
+hist(sumsteps$totalsteps,main=paste("Histogram of Total Steps Per Day"), xlab="Steps/Day")
+summary(sumsteps$totalsteps)
+```
+
+#What is the average daily activity pattern?
+
+```{r, echo=TRUE}
+meanbyinterval <- aggregate(data$steps~data$interval, FUN=mean, exclude="NA")
+plot(meanbyinterval, type="l",main=paste("Average Steps by Time of Day"), xlab="Time Interval", ylab="Average Steps")
+```
+
+#The time interval with the maximum average steps
+
+```{r, echo=TRUE}
+meanbyinterval[which.max(meanbyinterval[,2]),1]
+```
+
+#Impute missing values
+
+1. Calculate and report the total number of missing values in the data set
+
+```{r, echo=TRUE}
+sum(is.na(data$steps))
+```
+
+2 and 3. Replace missing data with average for that time interval
+
+```{r, echo=TRUE}
+newdata <- data
+for(i in 1:nrow(newdata)){
+        if(is.na(newdata[i,1])){
+                newdata[i,1] <- meanbyinterval[(which(meanbyinterval[,1] == newdata[i,3])),2]              
+                
+        }
+}
+```
+
+4. Recalculate total steps per day, and mean/median, using new data set with imputed values
+
+```{r, echo=TRUE}
+sumsteps <- ddply(newdata, .(date), summarize, totalsteps = sum(steps))
+hist(sumsteps$totalsteps,main=paste("Histogram of Total Steps Per Day"), xlab="Steps/Day")
+summary(sumsteps$totalsteps)
+```
+
+#Are there differences in activity patterns between weekends and weekdays?
+
+```{r, echo=TRUE}
+newdata$day <- weekdays(as.Date(newdata$date))
+newdata$weekpart <- ifelse(newdata$day == "Sunday" | newdata$day == "Saturday", c("Weekend"), c("Weekday"))
+newdata$weekpart <- as.factor(newdata$weekpart)
+newmeanbyinterval <- aggregate(newdata$steps~newdata$interval+newdata$weekpart, FUN=mean)
+
+library(lattice)
+
+xyplot(newmeanbyinterval[,3]~newmeanbyinterval[,1]|newmeanbyinterval[,2], type="l", layout=c(1,2), xlab="Time Interval", ylab="Steps", main="Steps by Interval, Weekend vs Weekday")
+
+```
+
