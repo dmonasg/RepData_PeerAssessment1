@@ -1,13 +1,11 @@
----
-title: "RepRes Peer Assignment 1"
-author: "dg"
-date: "Wednesday, October 07, 2015"
-output: html_document
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
 ---
 
-This document describes the analysis of an activity monitoring dataset, illustrates the code used to run the analysis, and displays the output of the analysis.
 
-#Loading and preprocessing the data
+## Loading and preprocessing the data
 
 ```{r, echo=TRUE}
 data <- read.csv("activity.csv")
@@ -17,7 +15,7 @@ data$date <- as.Date(data$date)
 library(plyr)
 ```
 
-#Calculate mean steps per day
+## What is mean total number of steps taken per day?
 
 ```{r, echo=TRUE}
 sumsteps <- ddply(data, .(date), summarize, totalsteps = sum(steps,na.rm=TRUE))
@@ -25,20 +23,18 @@ hist(sumsteps$totalsteps,main=paste("Histogram of Total Steps Per Day"), xlab="S
 summary(sumsteps$totalsteps)
 ```
 
-#What is the average daily activity pattern?
+## What is the average daily activity pattern?
 
 ```{r, echo=TRUE}
 meanbyinterval <- aggregate(data$steps~data$interval, FUN=mean, exclude="NA")
 plot(meanbyinterval, type="l",main=paste("Average Steps by Time of Day"), xlab="Time Interval", ylab="Average Steps")
 ```
 
-#The time interval with the maximum average steps
-
 ```{r, echo=TRUE}
 meanbyinterval[which.max(meanbyinterval[,2]),1]
 ```
 
-#Impute missing values
+## Imputing missing values
 
 1. Calculate and report the total number of missing values in the data set
 
@@ -66,7 +62,7 @@ hist(sumsteps$totalsteps,main=paste("Histogram of Total Steps Per Day"), xlab="S
 summary(sumsteps$totalsteps)
 ```
 
-#Are there differences in activity patterns between weekends and weekdays?
+## Are there differences in activity patterns between weekdays and weekends?
 
 ```{r, echo=TRUE}
 newdata$day <- weekdays(as.Date(newdata$date))
@@ -79,4 +75,3 @@ library(lattice)
 xyplot(newmeanbyinterval[,3]~newmeanbyinterval[,1]|newmeanbyinterval[,2], type="l", layout=c(1,2), xlab="Time Interval", ylab="Steps", main="Steps by Interval, Weekend vs Weekday")
 
 ```
-
